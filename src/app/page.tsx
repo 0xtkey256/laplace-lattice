@@ -40,7 +40,7 @@ export default function Home() {
               href="/dashboard"
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-mono font-bold text-black bg-green-400 hover:bg-green-300 rounded-lg transition-colors glow-green-strong"
             >
-              Explore the Dark Forest
+              Enter Schwarzwald
               <span>&rarr;</span>
             </a>
           </div>
