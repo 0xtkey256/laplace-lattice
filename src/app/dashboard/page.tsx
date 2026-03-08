@@ -4,6 +4,7 @@ import SignalPanel from "../components/SignalPanel";
 import StatsBar from "../components/StatsBar";
 import FormulaBar from "../components/FormulaBar";
 import PipelineFlow from "../components/PipelineFlow";
+import TeamInput from "../components/TeamInput";
 
 const team = [
   { initials: "TN", name: "Taiki", role: "Infra" },
@@ -147,12 +148,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Dark Forest Thesis */}
-          <div className="card p-3 border-green-500/10">
-            <div className="text-[10px] font-mono text-green-400/70 leading-relaxed">
-              <span className="text-green-400 font-bold">The Dark Forest Thesis:</span>{" "}
-              Markets are efficient in English. Alpha hides in the dark forest of local-language
-              news. Schwarzwald navigates it.
+          {/* Team Input */}
+          <div className="card p-3 flex-1 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider">
+                Team Comms
+              </h2>
+              <span className="text-[8px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
+                LIVE
+              </span>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <TeamInput />
             </div>
           </div>
         </div>
