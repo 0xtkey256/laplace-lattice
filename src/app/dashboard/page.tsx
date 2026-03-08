@@ -4,13 +4,55 @@ import SignalPanel from "../components/SignalPanel";
 import StatsBar from "../components/StatsBar";
 import FormulaBar from "../components/FormulaBar";
 import PipelineFlow from "../components/PipelineFlow";
-import TeamInput from "../components/TeamInput";
 
 const team = [
   { initials: "TN", name: "Taiki", role: "Infra" },
   { initials: "YM", name: "Yuki", role: "Geo/Data" },
   { initials: "HD", name: "Hammon", role: "Strategy" },
   { initials: "RM", name: "Rafael", role: "Quant" },
+];
+
+const memberSections = [
+  {
+    initials: "YM",
+    name: "Yuki",
+    section: "Geospatial Intelligence",
+    desc: "AIS ship tracking & satellite imagery overlay",
+    color: "border-cyan-500/20",
+    tagColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+    tag: "GEO",
+    skeletonLines: [3, 2, 4, 1],
+  },
+  {
+    initials: "HD",
+    name: "Hammon",
+    section: "Risk Management",
+    desc: "Position sizing & portfolio exposure rules",
+    color: "border-orange-500/20",
+    tagColor: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+    tag: "RISK",
+    skeletonLines: [2, 4, 3, 2],
+  },
+  {
+    initials: "RM",
+    name: "Rafael",
+    section: "Backtesting Engine",
+    desc: "Historical validation & statistical significance",
+    color: "border-pink-500/20",
+    tagColor: "text-pink-400 bg-pink-500/10 border-pink-500/20",
+    tag: "BACKTEST",
+    skeletonLines: [4, 2, 3, 1],
+  },
+  {
+    initials: "TN",
+    name: "Taiki",
+    section: "FPGA / LLVM Pipeline",
+    desc: "Hardware-accelerated MC engine & JIT strategy compiler",
+    color: "border-green-500/20",
+    tagColor: "text-green-400 bg-green-500/10 border-green-500/20",
+    tag: "INFRA",
+    skeletonLines: [2, 3, 4, 2],
+  },
 ];
 
 export default function Dashboard() {
@@ -106,10 +148,10 @@ export default function Dashboard() {
           <FormulaBar />
         </div>
 
-        {/* Right panel - Signals */}
+        {/* Right panel - Signals + Member Sections */}
         <div className="col-span-3 flex flex-col gap-3 overflow-hidden">
           {/* Trading Signals */}
-          <div className="card p-3 flex-1 flex flex-col overflow-hidden">
+          <div className="card p-3 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider">
                 Trading Signals
@@ -118,49 +160,56 @@ export default function Dashboard() {
                 4 ACTIVE
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="overflow-y-auto max-h-[140px]">
               <SignalPanel />
             </div>
           </div>
 
-          {/* Tech Stack */}
-          <div className="card p-3">
-            <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Powered By
-            </h2>
-            <div className="grid grid-cols-2 gap-1.5">
-              {[
-                { name: "CrustData", tag: "DATA", color: "text-green-400 bg-green-500/10 border-green-500/20" },
-                { name: "Shisa AI", tag: "NLP", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-                { name: "Blaxel", tag: "INFRA", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-                { name: "Schwarzwald", tag: "AI", color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
-              ].map((t, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-white/[0.02] border border-white/[0.05]"
-                >
-                  <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${t.color}`}>
-                    {t.tag}
-                  </span>
-                  <span className="text-[10px] text-gray-400">{t.name}</span>
+          {/* Member Placeholder Sections */}
+          <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
+            {memberSections.map((m, i) => (
+              <div
+                key={i}
+                className={`card p-3 ${m.color} hover:bg-white/[0.03] transition-all`}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center text-[7px] font-bold text-gray-400 flex-shrink-0">
+                    {m.initials}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <span className="text-[10px] font-semibold text-gray-300 truncate">{m.section}</span>
+                    <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${m.tagColor} flex-shrink-0`}>
+                      {m.tag}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Team Input */}
-          <div className="card p-3 flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider">
-                Team Comms
-              </h2>
-              <span className="text-[8px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
-                LIVE
-              </span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <TeamInput />
-            </div>
+                <p className="text-[8px] text-gray-600 font-mono mb-2">{m.desc}</p>
+                {/* Skeleton loading bars */}
+                <div className="space-y-1.5">
+                  {m.skeletonLines.map((width, j) => (
+                    <div key={j} className="flex gap-1.5">
+                      <div
+                        className="h-1.5 rounded-full bg-white/[0.04] skeleton-pulse"
+                        style={{ width: `${width * 25}%` }}
+                      />
+                      {width < 4 && (
+                        <div
+                          className="h-1.5 rounded-full bg-white/[0.03] skeleton-pulse"
+                          style={{ width: `${(4 - width) * 15}%`, animationDelay: `${j * 0.2}s` }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[8px] font-mono text-gray-700">{m.name}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-yellow-500/60 skeleton-pulse" />
+                    <span className="text-[7px] font-mono text-yellow-500/60">BUILDING</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
