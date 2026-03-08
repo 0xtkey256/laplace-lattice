@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Laplace Lattice | AI-Native Hedge Fund",
   description:
-    "Capturing alpha through multilingual news intelligence and Monte Carlo simulation. Powered by Schwarzwald AI.",
+    "Capturing alpha through multilingual news intelligence, satellite intelligence, and FPGA/LLVM acceleration before global markets react. Powered by Schwarzwald AI.",
 };
 
 export default function RootLayout({

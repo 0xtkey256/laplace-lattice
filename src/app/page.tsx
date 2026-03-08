@@ -35,7 +35,8 @@ export default function Home() {
             </p>
             <p className="text-xl md:text-2xl text-gray-400 max-w-2xl leading-relaxed">
               Capturing alpha through{" "}
-              <span className="text-white font-semibold">multilingual news intelligence</span>{" "}
+              <span className="text-white font-semibold">multilingual news and satellite intelligence</span>{" "}
+              plus FPGA/LLVM acceleration{" "}
               before global markets react.
             </p>
           </div>
