@@ -18,10 +18,10 @@ export default function Dashboard() {
       {/* Top bar */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05] bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold tracking-tight">
+          <a href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
             <span className="text-white">Laplace</span>
             <span className="text-green-400">Lattice</span>
-          </h1>
+          </a>
           <span className="text-[9px] font-mono text-purple-400/60 border border-purple-500/20 px-1.5 py-0.5 rounded">
             Schwarzwald v0.1
           </span>
