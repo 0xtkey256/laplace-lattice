@@ -6,6 +6,13 @@ Unified dashboard that integrates:
 - `gemma-translation` flow (Google Generative API translation)
 - `monte-carlo` flow (GBM simulation with sentiment-adjusted drift/volatility)
 
+## Live Vercel Links
+
+- Landing Page: https://ai-hedge-fund-one.vercel.app/
+- Dashboard: https://ai-hedge-fund-one.vercel.app/dashboard
+- Geospatial Intelligence: https://verceldeploy-eight-iota.vercel.app/
+- FPGA / LLVM Pipeline: https://laplace-fpga-llvm.vercel.app/
+
 ## Run Locally
 
 ```bash
