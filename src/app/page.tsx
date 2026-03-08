@@ -1,6 +1,10 @@
+"use client";
+
+import Link from "next/link";
 import MonteCarloChart from "./components/MonteCarloChart";
 import PipelineDiagram from "./components/PipelineDiagram";
 import NewsFeed from "./components/NewsFeed";
+import { createMockDashboardData } from "@/lib/dashboard/mock";
 
 const team = [
   { name: "Taiki Nakamura", role: "Full-Stack / FPGA / LLVM", focus: "Infrastructure & Integration" },
@@ -8,6 +12,8 @@ const team = [
   { name: "Hammon Dutra", role: "Hedge Fund Strategy", focus: "Domain Logic & Trading Rules" },
   { name: "Rafael Mori", role: "Math Researcher", focus: "Monte Carlo Engine & Quant Models" },
 ];
+
+const landingData = createMockDashboardData();
 
 export default function Home() {
   return (
@@ -36,13 +42,13 @@ export default function Home() {
 
           {/* CTA */}
           <div className="mt-8 animate-fade-in-delay-1">
-            <a
+            <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-mono font-bold text-black bg-green-400 hover:bg-green-300 rounded-lg transition-colors glow-green-strong"
             >
               Enter Schwarzwald
               <span>&rarr;</span>
-            </a>
+            </Link>
           </div>
 
           {/* Key stats */}
@@ -103,7 +109,7 @@ export default function Home() {
             <p className="text-gray-500 mb-6 text-sm font-mono">
               Real-time local news &rarr; Schwarzwald sentiment extraction
             </p>
-            <NewsFeed />
+            <NewsFeed items={landingData.news} loading={false} error={null} />
           </div>
 
           {/* Monte Carlo */}
@@ -112,7 +118,7 @@ export default function Home() {
             <p className="text-gray-500 mb-6 text-sm font-mono">
               Geometric Brownian Motion &middot; Schwarzwald-adjusted &#963; and &#956; parameters
             </p>
-            <MonteCarloChart />
+            <MonteCarloChart simulation={landingData.simulation} onRerun={() => {}} rerunning={false} />
             <div className="mt-4 p-4 rounded-lg bg-white/[0.03] border border-white/10">
               <p className="text-xs text-gray-500 font-mono leading-relaxed">
                 <span className="text-green-400 font-bold">How it works:</span>{" "}

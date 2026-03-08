@@ -1,236 +1,167 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-interface SimulationResult {
-  vanilla: number[][];
-  aiEnhanced: number[][];
-  actualPrice: number[];
+import type { MonteCarloSimulation } from "@/lib/dashboard/types";
+
+interface MonteCarloChartProps {
+  simulation: MonteCarloSimulation;
+  onRerun: () => void;
+  rerunning: boolean;
 }
 
-function generateBrownianMotion(
-  startPrice: number,
-  days: number,
-  mu: number,
-  sigma: number,
-  paths: number
-): number[][] {
-  const dt = 1 / 252;
-  const results: number[][] = [];
-  for (let p = 0; p < paths; p++) {
-    const path = [startPrice];
-    for (let i = 1; i < days; i++) {
-      const randomShock =
-        Math.sqrt(dt) *
-        (Math.sqrt(-2 * Math.log(Math.random())) *
-          Math.cos(2 * Math.PI * Math.random()));
-      const drift = (mu - 0.5 * sigma * sigma) * dt;
-      const diffusion = sigma * randomShock;
-      path.push(path[i - 1] * Math.exp(drift + diffusion));
-    }
-    results.push(path);
-  }
-  return results;
-}
-
-function generateActualPrice(startPrice: number, days: number): number[] {
-  const path = [startPrice];
-  const trend = 0.15;
-  const vol = 0.22;
-  const dt = 1 / 252;
-  for (let i = 1; i < days; i++) {
-    const shock =
-      Math.sqrt(dt) *
-      (Math.sqrt(-2 * Math.log(Math.random())) *
-        Math.cos(2 * Math.PI * Math.random()));
-    let eventShock = 0;
-    if (i === 15) eventShock = -0.035;
-    if (i === 16) eventShock = -0.02;
-    if (i === 20) eventShock = 0.015;
-    path.push(
-      path[i - 1] *
-        Math.exp((trend - 0.5 * vol * vol) * dt + vol * shock + eventShock)
-    );
-  }
-  return path;
-}
-
-export default function MonteCarloChart() {
+export default function MonteCarloChart({ simulation, onRerun, rerunning }: MonteCarloChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [sim, setSim] = useState<SimulationResult | null>(null);
-  const animFrameRef = useRef(0);
+  const animationFrameRef = useRef(0);
 
-  const runSimulation = () => {
-    const startPrice = 100;
-    const days = 60;
-    const numPaths = 50;
-    const vanilla = generateBrownianMotion(startPrice, days, 0.08, 0.25, numPaths);
-    const aiEnhanced = generateBrownianMotion(startPrice, days, 0.06, 0.3, numPaths);
-    for (const path of aiEnhanced) {
-      for (let i = 14; i < days; i++) {
-        path[i] = path[i] * (1 - 0.03 * (1 - (i - 14) / (days - 14)));
-      }
+  useEffect(() => {
+    if (!canvasRef.current) {
+      return;
     }
-    const actualPrice = generateActualPrice(startPrice, days);
-    setSim({ vanilla, aiEnhanced, actualPrice });
-  };
 
-  useEffect(() => {
-    runSimulation();
-  }, []);
-
-  useEffect(() => {
-    if (!sim || !canvasRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d")!;
-    const dpr = window.devicePixelRatio || 1;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const width = rect.width;
     const height = rect.height;
     const padding = { top: 35, right: 20, bottom: 45, left: 50 };
-    const chartW = width - padding.left - padding.right;
-    const chartH = height - padding.top - padding.bottom;
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
 
     const allPrices = [
-      ...sim.vanilla.flat(),
-      ...sim.aiEnhanced.flat(),
-      ...sim.actualPrice,
+      ...simulation.paths.flat(),
+      ...simulation.meanPath,
+      ...simulation.percentiles["5th"],
+      ...simulation.percentiles["95th"],
+      ...simulation.actualPrice,
     ];
-    const minP = Math.min(...allPrices) * 0.98;
-    const maxP = Math.max(...allPrices) * 1.02;
-    const days = sim.actualPrice.length;
 
-    const xScale = (i: number) => padding.left + (i / (days - 1)) * chartW;
-    const yScale = (p: number) =>
-      padding.top + chartH - ((p - minP) / (maxP - minP)) * chartH;
+    const minPrice = Math.min(...allPrices) * 0.98;
+    const maxPrice = Math.max(...allPrices) * 1.02;
+    const steps = simulation.actualPrice.length - 1;
 
-    let step = 0;
-    const totalSteps = days;
+    const xScale = (step: number) => padding.left + (step / Math.max(steps, 1)) * chartWidth;
+    const yScale = (price: number) =>
+      padding.top + chartHeight - ((price - minPrice) / Math.max(maxPrice - minPrice, 1e-6)) * chartHeight;
+
+    let frameStep = 0;
+    const totalSteps = steps;
+
+    const drawSeries = (values: number[], color: string, lineWidth: number, stepLimit: number) => {
+      context.beginPath();
+      context.strokeStyle = color;
+      context.lineWidth = lineWidth;
+      for (let index = 0; index <= stepLimit; index++) {
+        if (index === 0) {
+          context.moveTo(xScale(index), yScale(values[index]));
+        } else {
+          context.lineTo(xScale(index), yScale(values[index]));
+        }
+      }
+      context.stroke();
+    };
 
     const draw = () => {
-      step = Math.min(step + 1, totalSteps);
-      ctx.clearRect(0, 0, width, height);
+      frameStep = Math.min(frameStep + 1, totalSteps);
+      context.clearRect(0, 0, width, height);
 
-      // Dark bg
-      ctx.fillStyle = "#050505";
-      ctx.fillRect(0, 0, width, height);
+      context.fillStyle = "#050505";
+      context.fillRect(0, 0, width, height);
 
-      // Grid
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.06)";
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i <= 5; i++) {
-        const y = padding.top + (i / 5) * chartH;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
-        ctx.stroke();
-        ctx.fillStyle = "#444";
-        ctx.font = "10px monospace";
-        ctx.textAlign = "right";
-        const price = maxP - (i / 5) * (maxP - minP);
-        ctx.fillText(`$${price.toFixed(0)}`, padding.left - 6, y + 3);
+      context.strokeStyle = "rgba(34, 197, 94, 0.06)";
+      context.lineWidth = 0.5;
+      for (let index = 0; index <= 5; index++) {
+        const y = padding.top + (index / 5) * chartHeight;
+        context.beginPath();
+        context.moveTo(padding.left, y);
+        context.lineTo(width - padding.right, y);
+        context.stroke();
+
+        context.fillStyle = "#444";
+        context.font = "10px monospace";
+        context.textAlign = "right";
+        const price = maxPrice - (index / 5) * (maxPrice - minPrice);
+        context.fillText(`$${price.toFixed(0)}`, padding.left - 6, y + 3);
       }
 
-      // X labels
-      ctx.fillStyle = "#444";
-      ctx.font = "10px monospace";
-      ctx.textAlign = "center";
-      for (let i = 0; i <= 4; i++) {
-        const dayNum = Math.round((i / 4) * (days - 1));
-        ctx.fillText(`D${dayNum}`, xScale(dayNum), height - padding.bottom + 16);
+      context.fillStyle = "#444";
+      context.font = "10px monospace";
+      context.textAlign = "center";
+      for (let index = 0; index <= 4; index++) {
+        const step = Math.round((index / 4) * steps);
+        context.fillText(`D${step}`, xScale(step), height - padding.bottom + 16);
       }
 
-      // News event zone
-      if (step >= 15) {
-        const grad = ctx.createLinearGradient(
-          xScale(14), 0, xScale(17), 0
-        );
-        grad.addColorStop(0, "rgba(239, 68, 68, 0.0)");
-        grad.addColorStop(0.3, "rgba(239, 68, 68, 0.12)");
-        grad.addColorStop(0.7, "rgba(239, 68, 68, 0.12)");
-        grad.addColorStop(1, "rgba(239, 68, 68, 0.0)");
-        ctx.fillStyle = grad;
-        ctx.fillRect(xScale(13), padding.top, xScale(18) - xScale(13), chartH);
+      if (frameStep >= 15) {
+        const gradient = context.createLinearGradient(xScale(14), 0, xScale(17), 0);
+        gradient.addColorStop(0, "rgba(239, 68, 68, 0.0)");
+        gradient.addColorStop(0.3, "rgba(239, 68, 68, 0.12)");
+        gradient.addColorStop(0.7, "rgba(239, 68, 68, 0.12)");
+        gradient.addColorStop(1, "rgba(239, 68, 68, 0.0)");
+        context.fillStyle = gradient;
+        context.fillRect(xScale(13), padding.top, xScale(18) - xScale(13), chartHeight);
 
-        ctx.fillStyle = "#ef4444";
-        ctx.font = "bold 9px monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("NEWS EVENT", xScale(15.5), padding.top + 14);
-        ctx.font = "8px monospace";
-        ctx.fillStyle = "#f87171";
-        ctx.fillText("Schwarzwald detected", xScale(15.5), padding.top + 26);
+        context.fillStyle = "#ef4444";
+        context.font = "bold 9px monospace";
+        context.fillText("NEWS EVENT", xScale(15.5), padding.top + 14);
       }
 
-      // Vanilla paths
-      for (const path of sim.vanilla) {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(100, 100, 255, 0.08)";
-        ctx.lineWidth = 0.8;
-        for (let i = 0; i < step; i++) {
-          if (i === 0) ctx.moveTo(xScale(i), yScale(path[i]));
-          else ctx.lineTo(xScale(i), yScale(path[i]));
-        }
-        ctx.stroke();
+      for (const path of simulation.paths) {
+        drawSeries(path, "rgba(34, 197, 94, 0.07)", 0.8, frameStep);
       }
 
-      // Schwarzwald paths
-      for (const path of sim.aiEnhanced) {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.1)";
-        ctx.lineWidth = 0.8;
-        for (let i = 0; i < step; i++) {
-          if (i === 0) ctx.moveTo(xScale(i), yScale(path[i]));
-          else ctx.lineTo(xScale(i), yScale(path[i]));
-        }
-        ctx.stroke();
-      }
+      drawSeries(simulation.percentiles["5th"], "rgba(100, 100, 255, 0.25)", 1.2, frameStep);
+      drawSeries(simulation.percentiles["95th"], "rgba(100, 100, 255, 0.25)", 1.2, frameStep);
+      drawSeries(simulation.meanPath, "rgba(59, 130, 246, 0.9)", 2, frameStep);
 
-      // Actual price
-      ctx.beginPath();
-      ctx.strokeStyle = "#facc15";
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = "rgba(250, 204, 21, 0.4)";
-      ctx.shadowBlur = 8;
-      for (let i = 0; i < step; i++) {
-        if (i === 0) ctx.moveTo(xScale(i), yScale(sim.actualPrice[i]));
-        else ctx.lineTo(xScale(i), yScale(sim.actualPrice[i]));
-      }
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      context.shadowColor = "rgba(250, 204, 21, 0.4)";
+      context.shadowBlur = 8;
+      drawSeries(simulation.actualPrice, "#facc15", 2.5, frameStep);
+      context.shadowBlur = 0;
 
-      // Legend
       const legendY = height - 8;
-      ctx.font = "10px monospace";
-      ctx.textAlign = "left";
+      context.font = "10px monospace";
+      context.textAlign = "left";
 
-      ctx.fillStyle = "rgba(100, 100, 255, 0.5)";
-      ctx.fillRect(padding.left, legendY - 6, 12, 2);
-      ctx.fillStyle = "#555";
-      ctx.fillText("Vanilla", padding.left + 16, legendY - 1);
+      context.fillStyle = "rgba(34, 197, 94, 0.65)";
+      context.fillRect(padding.left, legendY - 6, 12, 2);
+      context.fillStyle = "#555";
+      context.fillText("MC Paths", padding.left + 16, legendY - 1);
 
-      ctx.fillStyle = "rgba(34, 197, 94, 0.6)";
-      ctx.fillRect(padding.left + 85, legendY - 6, 12, 2);
-      ctx.fillStyle = "#555";
-      ctx.fillText("Schwarzwald", padding.left + 101, legendY - 1);
+      context.fillStyle = "rgba(59, 130, 246, 0.9)";
+      context.fillRect(padding.left + 95, legendY - 6, 12, 2);
+      context.fillStyle = "#555";
+      context.fillText("Mean", padding.left + 111, legendY - 1);
 
-      ctx.fillStyle = "#facc15";
-      ctx.fillRect(padding.left + 200, legendY - 6, 12, 2);
-      ctx.fillStyle = "#555";
-      ctx.fillText("Actual", padding.left + 216, legendY - 1);
+      context.fillStyle = "#facc15";
+      context.fillRect(padding.left + 155, legendY - 6, 12, 2);
+      context.fillStyle = "#555";
+      context.fillText("Actual", padding.left + 171, legendY - 1);
 
-      if (step < totalSteps) {
-        animFrameRef.current = requestAnimationFrame(draw);
+      if (frameStep < totalSteps) {
+        animationFrameRef.current = requestAnimationFrame(draw);
       }
     };
 
-    step = 0;
     draw();
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, [sim]);
+
+    return () => {
+      cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [simulation]);
 
   return (
     <div className="relative h-full">
@@ -240,10 +171,11 @@ export default function MonteCarloChart() {
         style={{ minHeight: 280 }}
       />
       <button
-        onClick={runSimulation}
-        className="absolute top-2 right-2 px-2 py-1 text-[10px] font-mono bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-gray-400"
+        onClick={onRerun}
+        disabled={rerunning}
+        className="absolute top-2 right-2 px-2 py-1 text-[10px] font-mono bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-gray-400 disabled:opacity-50"
       >
-        Re-run
+        {rerunning ? "Refreshing..." : "Re-run"}
       </button>
     </div>
   );

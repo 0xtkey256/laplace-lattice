@@ -1,9 +1,16 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+
+import FormulaBar from "../components/FormulaBar";
 import MonteCarloChart from "../components/MonteCarloChart";
 import NewsFeed from "../components/NewsFeed";
+import PipelineFlow from "../components/PipelineFlow";
 import SignalPanel from "../components/SignalPanel";
 import StatsBar from "../components/StatsBar";
-import FormulaBar from "../components/FormulaBar";
-import PipelineFlow from "../components/PipelineFlow";
+import { createMockDashboardData } from "@/lib/dashboard/mock";
+import type { DashboardData } from "@/lib/dashboard/types";
 
 const team = [
   { initials: "TN", name: "Taiki", role: "Infra" },
@@ -57,30 +64,76 @@ const memberSections = [
 ];
 
 export default function Dashboard() {
+  const [dashboardData, setDashboardData] = useState<DashboardData>(() => createMockDashboardData());
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDashboardData = useCallback(async (manual: boolean) => {
+    if (manual) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const response = await fetch(`/api/dashboard?ts=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Dashboard API failed (${response.status})`);
+      }
+
+      const payload = (await response.json()) as DashboardData;
+      setDashboardData(payload);
+      setError(null);
+    } catch (fetchError) {
+      const message = fetchError instanceof Error ? fetchError.message : "Unknown fetch error";
+      setError(message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDashboardData(false);
+
+    const interval = setInterval(() => {
+      void loadDashboardData(false);
+    }, 2 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [loadDashboardData]);
+
+  const signalCount = dashboardData.signals.length;
+
   return (
     <div className="h-screen flex flex-col forest-bg overflow-hidden">
-      {/* Top bar */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05] bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <a href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
+          <Link href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
             <span className="text-white">Laplace</span>
             <span className="text-green-400">Lattice</span>
-          </a>
+          </Link>
           <span className="text-[9px] font-mono text-purple-400/60 border border-purple-500/20 px-1.5 py-0.5 rounded">
-            Schwarzwald v0.1
+            Schwarzwald v0.2
           </span>
           <span className="text-[9px] font-mono text-gray-600 ml-2">
             AI-Native Hedge Fund
           </span>
+          {dashboardData.warnings.length > 0 && (
+            <span className="text-[8px] font-mono text-yellow-400 border border-yellow-500/20 px-1.5 py-0.5 rounded">
+              {dashboardData.warnings.length} WARNINGS
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
-          {team.map((m, i) => (
+          {team.map((member) => (
             <div
-              key={i}
+              key={member.initials}
               className="w-7 h-7 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center text-[9px] font-bold text-gray-400"
-              title={`${m.name} - ${m.role}`}
+              title={`${member.name} - ${member.role}`}
             >
-              {m.initials}
+              {member.initials}
             </div>
           ))}
           <div className="h-5 w-px bg-white/10 mx-1" />
@@ -90,17 +143,13 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Stats bar */}
-      <StatsBar />
+      <StatsBar stats={dashboardData.stats} warnings={dashboardData.warnings} />
 
-      {/* Pipeline flow */}
       <div className="px-5 py-2 border-b border-white/[0.04] bg-black/20">
         <PipelineFlow />
       </div>
 
-      {/* Main content */}
       <div className="flex-1 grid grid-cols-12 gap-3 p-4 overflow-hidden">
-        {/* Left panel - News Feed */}
         <div className="col-span-3 flex flex-col gap-3 overflow-hidden">
           <div className="card p-3 flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2">
@@ -108,22 +157,22 @@ export default function Dashboard() {
                 Dark Forest Feed
               </h2>
               <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 signal-live" />
-                <span className="text-[8px] font-mono text-green-500">SCANNING</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${loading ? "bg-yellow-400" : "bg-green-400"} signal-live`} />
+                <span className={`text-[8px] font-mono ${loading ? "text-yellow-400" : "text-green-500"}`}>
+                  {loading ? "SYNCING" : "SCANNING"}
+                </span>
               </div>
             </div>
             <p className="text-[9px] text-gray-600 font-mono mb-2">
-              Local news in native languages via CrustData
+              CrustData web-search/web-fetch + Gemma translation
             </p>
             <div className="flex-1 overflow-hidden">
-              <NewsFeed />
+              <NewsFeed items={dashboardData.news} loading={loading} error={error} />
             </div>
           </div>
         </div>
 
-        {/* Center - Monte Carlo Chart */}
         <div className="col-span-6 flex flex-col gap-3 overflow-hidden">
-          {/* Chart */}
           <div className="card p-3 flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <div>
@@ -131,70 +180,74 @@ export default function Dashboard() {
                   Monte Carlo Simulation
                 </h2>
                 <p className="text-[9px] text-gray-600 font-mono">
-                  Geometric Brownian Motion {"\u00B7"} 10,000 paths {"\u00B7"} Schwarzwald-adjusted {"\u03C3"}, {"\u03BC"}
+                  GBM engine + AI drift/vol adjustments · {dashboardData.simulation.numSimulations.toLocaleString()} paths
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  SOYBEANS (ZS)
+                  {dashboardData.simulation.asset}
                 </span>
               </div>
             </div>
             <div className="flex-1 min-h-0">
-              <MonteCarloChart />
+              <MonteCarloChart
+                simulation={dashboardData.simulation}
+                rerunning={refreshing}
+                onRerun={() => {
+                  void loadDashboardData(true);
+                }}
+              />
             </div>
           </div>
 
-          {/* Formula */}
-          <FormulaBar />
+          <FormulaBar formula={dashboardData.formula} asset={dashboardData.simulation.asset} />
         </div>
 
-        {/* Right panel - Signals + Member Sections */}
         <div className="col-span-3 flex flex-col gap-3 overflow-hidden">
-          {/* Trading Signals */}
           <div className="card p-3 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider">
                 Trading Signals
               </h2>
               <span className="text-[8px] font-mono text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">
-                4 ACTIVE
+                {signalCount} ACTIVE
               </span>
             </div>
             <div className="overflow-y-auto max-h-[140px]">
-              <SignalPanel />
+              <SignalPanel signals={dashboardData.signals} />
             </div>
           </div>
 
-          {/* Member Placeholder Sections */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-            {memberSections.map((m, i) => {
-              const isLive = "url" in m && m.url;
+            {memberSections.map((member) => {
+              const isLive = "url" in member && Boolean(member.url);
               const Wrapper = isLive ? "a" : "div";
-              const wrapperProps = isLive ? { href: m.url as string, target: "_blank", rel: "noopener noreferrer" } : {};
+              const wrapperProps = isLive
+                ? { href: member.url as string, target: "_blank", rel: "noopener noreferrer" }
+                : {};
+
               return (
                 <Wrapper
-                  key={i}
+                  key={member.initials}
                   {...wrapperProps}
-                  className={`card p-3 ${m.color} hover:bg-white/[0.03] transition-all block ${isLive ? "cursor-pointer glow-green" : ""}`}
+                  className={`card p-3 ${member.color} hover:bg-white/[0.03] transition-all block ${isLive ? "cursor-pointer glow-green" : ""}`}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center text-[7px] font-bold text-gray-400 flex-shrink-0">
-                      {m.initials}
+                      {member.initials}
                     </div>
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="text-[10px] font-semibold text-gray-300 truncate">{m.section}</span>
-                      <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${m.tagColor} flex-shrink-0`}>
-                        {m.tag}
+                      <span className="text-[10px] font-semibold text-gray-300 truncate">{member.section}</span>
+                      <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${member.tagColor} flex-shrink-0`}>
+                        {member.tag}
                       </span>
                     </div>
                   </div>
-                  <p className="text-[8px] text-gray-600 font-mono mb-2">{m.desc}</p>
-                  {/* Skeleton loading bars */}
+                  <p className="text-[8px] text-gray-600 font-mono mb-2">{member.desc}</p>
                   {!isLive && (
                     <div className="space-y-1.5">
-                      {m.skeletonLines.map((width, j) => (
-                        <div key={j} className="flex gap-1.5">
+                      {member.skeletonLines.map((width, index) => (
+                        <div key={`${member.initials}-${index}`} className="flex gap-1.5">
                           <div
                             className="h-1.5 rounded-full bg-white/[0.04] skeleton-pulse"
                             style={{ width: `${width * 25}%` }}
@@ -202,7 +255,7 @@ export default function Dashboard() {
                           {width < 4 && (
                             <div
                               className="h-1.5 rounded-full bg-white/[0.03] skeleton-pulse"
-                              style={{ width: `${(4 - width) * 15}%`, animationDelay: `${j * 0.2}s` }}
+                              style={{ width: `${(4 - width) * 15}%`, animationDelay: `${index * 0.2}s` }}
                             />
                           )}
                         </div>
@@ -210,7 +263,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[8px] font-mono text-gray-700">{m.name}</span>
+                    <span className="text-[8px] font-mono text-gray-700">{member.name}</span>
                     {isLive ? (
                       <div className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 signal-live" />
@@ -230,13 +283,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <footer className="px-5 py-2 border-t border-white/[0.05] bg-black/40 flex items-center justify-between">
         <span className="text-[9px] font-mono text-gray-700">
-          Laplace Lattice {"\u00B7"} YC Hackathon Tokyo 2026 {"\u00B7"} Compiled
+          Laplace Lattice · YC Hackathon Tokyo 2026 · Integrated Pipeline
         </span>
         <span className="text-[9px] font-mono text-gray-700">
-          Schwarzwald = Black Forest {"\u00B7"} Finding alpha in the dark
+          Generated {new Date(dashboardData.generatedAt).toLocaleTimeString("en-US", { hour12: false })}
         </span>
       </footer>
     </div>

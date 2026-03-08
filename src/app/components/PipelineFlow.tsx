@@ -2,7 +2,7 @@
 
 const steps = [
   { icon: "\u{1F4F0}", label: "CrustData Scrape", status: "active" },
-  { icon: "\u{1F30F}", label: "Shisa AI (JP)", status: "active" },
+  { icon: "\u{1F30F}", label: "Gemma Translation", status: "active" },
   { icon: "\u{1F9E0}", label: "Schwarzwald", status: "active" },
   { icon: "\u{1F4CA}", label: "Signal Agg", status: "active" },
   { icon: "\u{1F3B2}", label: "Monte Carlo", status: "active" },

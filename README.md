@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Hedge Fund Dashboard
 
-## Getting Started
+Unified dashboard that integrates:
 
-First, run the development server:
+- `news_scraper` flow (CrustData `web-search` + `web-fetch`)
+- `gemma-translation` flow (Google Generative API translation)
+- `monte-carlo` flow (GBM simulation with sentiment-adjusted drift/volatility)
+
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000/dashboard`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local` in this repo:
 
-## Learn More
+```bash
+CRUSTDATA_TOKEN=your_crustdata_token
+GOOGLE_API_KEY=your_google_ai_studio_key
 
-To learn more about Next.js, take a look at the following resources:
+# Optional tuning
+GEMMA_MODEL=gemma-3-27b-it
+DASHBOARD_NEWS_QUERY=soybeans drought export strike copper mining
+DASHBOARD_GEOLOCATION=BR
+DASHBOARD_NEWS_LIMIT=8
+DASHBOARD_TARGET_LANGUAGE=English
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If keys are missing or an API call fails, the dashboard automatically falls back to mock data and shows a degraded status.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API
 
-## Deploy on Vercel
+- `GET /api/dashboard`
+  - Returns aggregated news, translated headlines, trading signals, Monte Carlo output, stats, and warnings in one payload.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The external `monte-carlo` repo currently misses `backend/engine/monte_carlo.py`; this dashboard includes a compatible TypeScript Monte Carlo engine implementation.
