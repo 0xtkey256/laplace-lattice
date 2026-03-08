@@ -8,6 +8,7 @@ import MonteCarloChart from "../components/MonteCarloChart";
 import NewsFeed from "../components/NewsFeed";
 import PipelineFlow from "../components/PipelineFlow";
 import ExecutionPanel from "../components/ExecutionPanel";
+import ChatbotPanel from "../components/ChatbotPanel";
 import SignalPanel from "../components/SignalPanel";
 import StatsBar from "../components/StatsBar";
 import { createMockDashboardData } from "@/lib/dashboard/mock";
@@ -306,6 +307,8 @@ export default function Dashboard() {
           Generated {new Date(dashboardData.generatedAt).toLocaleTimeString("en-US", { hour12: false })}
         </span>
       </footer>
+
+      <ChatbotPanel />
     </div>
   );
 }
