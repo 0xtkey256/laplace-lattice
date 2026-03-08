@@ -154,7 +154,7 @@ export default function MonteCarloChart() {
         ctx.fillText("LOCAL NEWS EVENT", xScale(15.5), padding.top - 8);
         ctx.font = "10px monospace";
         ctx.fillStyle = "#f87171";
-        ctx.fillText("(detected by AI)", xScale(15.5), padding.top + 12);
+        ctx.fillText("(detected by Schwarzwald)", xScale(15.5), padding.top + 12);
       }
 
       // Draw vanilla paths
@@ -205,7 +205,7 @@ export default function MonteCarloChart() {
       ctx.fillStyle = "rgba(34, 197, 94, 0.7)";
       ctx.fillRect(padding.left + 130, legendY - 8, 16, 3);
       ctx.fillStyle = "#888";
-      ctx.fillText("AI-Enhanced MC", padding.left + 152, legendY - 2);
+      ctx.fillText("Schwarzwald MC", padding.left + 152, legendY - 2);
 
       ctx.fillStyle = "#facc15";
       ctx.fillRect(padding.left + 290, legendY - 8, 16, 3);

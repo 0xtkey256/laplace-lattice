@@ -21,10 +21,12 @@ export default function Home() {
               YC Hackathon 2026 &middot; AI-Native Hedge Fund
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              <span className="text-white">Alpha</span>
-              <span className="text-green-400">Signal</span>
-              <span className="text-gray-600 text-3xl md:text-4xl ml-3">AI</span>
+              <span className="text-white">Laplace</span>
+              <span className="text-green-400">Lattice</span>
             </h1>
+            <p className="text-sm font-mono text-gray-500 -mt-4 mb-2">
+              powered by <span className="text-purple-400">Schwarzwald</span> AI
+            </p>
             <p className="text-xl md:text-2xl text-gray-400 max-w-2xl leading-relaxed">
               Capturing alpha through{" "}
               <span className="text-white font-semibold">multilingual news intelligence</span>{" "}
@@ -64,7 +66,7 @@ export default function Home() {
           <div className="p-6 rounded-xl bg-green-500/5 border border-green-500/20">
             <h2 className="text-lg font-bold text-green-400 mb-3">Our Solution</h2>
             <p className="text-gray-400 leading-relaxed">
-              AI agents scrape local news in native languages, extract commodity signals with
+              Schwarzwald AI agents scrape local news in native languages, extract commodity signals with
               sentiment analysis, and feed them into a Monte Carlo simulation engine that produces
               better price predictions than either method alone.
             </p>
@@ -76,7 +78,7 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold mb-2">Architecture</h2>
         <p className="text-gray-500 mb-8 text-sm font-mono">
-          News &rarr; AI Analysis &rarr; Signal &rarr; Monte Carlo &rarr; Alpha
+          News &rarr; Schwarzwald Analysis &rarr; Signal &rarr; Monte Carlo &rarr; Alpha
         </p>
         <PipelineDiagram />
       </section>
@@ -88,7 +90,7 @@ export default function Home() {
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-bold mb-2">Live Signal Feed</h2>
             <p className="text-gray-500 mb-6 text-sm font-mono">
-              Real-time local news &rarr; AI sentiment extraction
+              Real-time local news &rarr; Schwarzwald sentiment extraction
             </p>
             <NewsFeed />
           </div>
@@ -97,15 +99,15 @@ export default function Home() {
           <div className="lg:col-span-3">
             <h2 className="text-2xl font-bold mb-2">Monte Carlo Simulation</h2>
             <p className="text-gray-500 mb-6 text-sm font-mono">
-              Geometric Brownian Motion &middot; AI-adjusted &#963; and &#956; parameters
+              Geometric Brownian Motion &middot; Schwarzwald-adjusted &#963; and &#956; parameters
             </p>
             <MonteCarloChart />
             <div className="mt-4 p-4 rounded-lg bg-white/[0.03] border border-white/10">
               <p className="text-xs text-gray-500 font-mono leading-relaxed">
                 <span className="text-green-400 font-bold">How it works:</span>{" "}
-                When a local news event is detected (red zone), AI adjusts the volatility (&#963;)
+                When a local news event is detected (red zone), Schwarzwald adjusts the volatility (&#963;)
                 and drift (&#956;) parameters fed into the Monte Carlo engine. The green paths
-                (AI-enhanced) track closer to actual price movement (yellow line) than vanilla
+                (Schwarzwald-enhanced) track closer to actual price movement (yellow line) than vanilla
                 simulations (blue paths) that miss the signal.
               </p>
             </div>
@@ -125,13 +127,13 @@ export default function Home() {
             <div>
               <span className="text-yellow-400">&#956;(t)</span>{" "}
               <span className="text-gray-500">= &#956;_base + f(</span>
-              <span className="text-blue-400">AI_signal</span>
+              <span className="text-blue-400">Schwarzwald</span>
               <span className="text-gray-500">)</span>
             </div>
             <div>
               <span className="text-green-400">&#963;(t)</span>{" "}
               <span className="text-gray-500">= &#963;_base + g(</span>
-              <span className="text-blue-400">AI_signal</span>
+              <span className="text-blue-400">Schwarzwald</span>
               <span className="text-gray-500">)</span>
             </div>
           </div>
@@ -148,7 +150,7 @@ export default function Home() {
             { name: "Blaxel", desc: "AI agent sandbox", tag: "SPONSOR" },
             { name: "Python / FastAPI", desc: "Backend engine", tag: "CORE" },
             { name: "Next.js", desc: "Dashboard", tag: "CORE" },
-            { name: "Claude API", desc: "Multilingual NLP", tag: "AI" },
+            { name: "Schwarzwald", desc: "Multilingual NLP model", tag: "AI" },
           ].map((tech, i) => (
             <div
               key={i}

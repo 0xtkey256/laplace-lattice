@@ -11,11 +11,11 @@ const steps = [
   },
   {
     icon: "🧠",
-    title: "AI Sentiment Analysis",
-    desc: "LLM extracts commodity signals",
+    title: "Schwarzwald Analysis",
+    desc: "AI model extracts commodity signals",
     color: "from-purple-500/20 to-purple-600/10",
     border: "border-purple-500/30",
-    tool: "Claude API",
+    tool: "Schwarzwald",
   },
   {
     icon: "📊",
