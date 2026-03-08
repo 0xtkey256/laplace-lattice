@@ -6,6 +6,14 @@ Unified dashboard that integrates:
 - `gemma-translation` flow (Google Generative API translation)
 - `monte-carlo` flow (GBM simulation with sentiment-adjusted drift/volatility)
 
+## Tools & APIs Used
+
+- CrustData API (news discovery via `web-search` and `web-fetch`)
+- ShisaAI (Japanese/local-language analysis workflow)
+- Google Generative AI API (Gemma translation and multilingual processing)
+- OpenAI API (chat/agent extensions)
+- Gemma models (default: `gemma-3-27b-it`)
+
 ## Live Vercel Links
 
 - Landing Page: https://ai-hedge-fund-one.vercel.app/
@@ -32,6 +40,8 @@ GOOGLE_API_KEY=your_google_ai_studio_key
 
 # Optional tuning
 GEMMA_MODEL=gemma-3-27b-it
+OPENAI_API_KEY=your_openai_api_key
+SHISA_API_KEY=your_shisaai_api_key
 DASHBOARD_NEWS_QUERY=soybeans drought export strike copper mining
 DASHBOARD_GEOLOCATION=BR
 DASHBOARD_NEWS_LIMIT=8
