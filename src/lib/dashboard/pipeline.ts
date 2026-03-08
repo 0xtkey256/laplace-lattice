@@ -1,6 +1,13 @@
 import { runMonteCarloSimulation } from "@/lib/dashboard/monteCarlo";
 import { createMockDashboardData } from "@/lib/dashboard/mock";
-import type { DashboardData, DashboardNewsItem, DashboardSignal, ImpactLevel } from "@/lib/dashboard/types";
+import type {
+  DashboardData,
+  DashboardExecutionOrder,
+  DashboardNewsItem,
+  DashboardSignal,
+  ImpactLevel,
+  MonteCarloSimulation,
+} from "@/lib/dashboard/types";
 
 interface SearchResult {
   url?: string;
@@ -516,6 +523,43 @@ function baseParamsForAsset(asset: string): { initialPrice: number; baseMu: numb
   return { initialPrice: 1200, baseMu: 0.04, baseSigma: 0.18 };
 }
 
+function executionFromSignals(
+  signals: DashboardSignal[],
+  simulation: MonteCarloSimulation,
+): DashboardExecutionOrder[] {
+  const referencePrice = simulation.actualPrice.at(-1) ?? simulation.initialPrice;
+  const projectedMean = simulation.meanPath.at(-1) ?? referencePrice;
+
+  return signals.map((signal, index) => {
+    const side = signal.direction === "LONG" ? "BUY" : "SELL";
+    const confidence = clamp(signal.confidence, 0, 1);
+    const sizePct = Number(clamp(confidence * 12, 2, 15).toFixed(2));
+    const orderType = confidence >= 0.75 ? "MKT" : "LMT";
+    const status =
+      confidence >= 0.85 ? "FILLED" : confidence >= 0.65 ? "ROUTED" : confidence >= 0.55 ? "QUEUED" : "BLOCKED";
+
+    const directionalBias = side === "BUY" ? 1 : -1;
+    const move = Math.abs(projectedMean - referencePrice) / Math.max(referencePrice, 1e-6);
+    const limitOffset = clamp(move * 0.5 + Math.abs(signal.mu_adj) * 0.3, 0.002, 0.03);
+    const limitPrice = Number(
+      (referencePrice * (1 + directionalBias * (orderType === "LMT" ? -limitOffset : 0))).toFixed(2),
+    );
+
+    return {
+      id: `exec-${Date.now()}-${index + 1}`,
+      commodity: signal.commodity,
+      asset: simulation.asset,
+      side,
+      orderType,
+      status,
+      confidence,
+      sizePct,
+      limitPrice,
+      rationale: `AI ${signal.direction} signal from ${signal.source} translated into ${side} execution intent.`,
+    };
+  });
+}
+
 export async function buildDashboardData(): Promise<DashboardData> {
   const warnings: string[] = [];
 
@@ -550,11 +594,13 @@ export async function buildDashboardData(): Promise<DashboardData> {
       asset,
       eventSentiment: aggregateSentiment,
     });
+    const execution = executionFromSignals(signals, simulation);
 
     return {
       generatedAt: new Date().toISOString(),
       news,
       signals,
+      execution,
       simulation,
       formula: {
         baseMu,

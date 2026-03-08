@@ -54,10 +54,24 @@ export interface DashboardStats {
   sources: number;
 }
 
+export interface DashboardExecutionOrder {
+  id: string;
+  commodity: string;
+  asset: string;
+  side: "BUY" | "SELL";
+  orderType: "MKT" | "LMT";
+  status: "QUEUED" | "ROUTED" | "FILLED" | "BLOCKED";
+  confidence: number;
+  sizePct: number;
+  limitPrice: number;
+  rationale: string;
+}
+
 export interface DashboardData {
   generatedAt: string;
   news: DashboardNewsItem[];
   signals: DashboardSignal[];
+  execution: DashboardExecutionOrder[];
   simulation: MonteCarloSimulation;
   formula: DashboardFormula;
   stats: DashboardStats;

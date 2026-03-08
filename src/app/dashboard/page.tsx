@@ -7,6 +7,7 @@ import FormulaBar from "../components/FormulaBar";
 import MonteCarloChart from "../components/MonteCarloChart";
 import NewsFeed from "../components/NewsFeed";
 import PipelineFlow from "../components/PipelineFlow";
+import ExecutionPanel from "../components/ExecutionPanel";
 import SignalPanel from "../components/SignalPanel";
 import StatsBar from "../components/StatsBar";
 import { createMockDashboardData } from "@/lib/dashboard/mock";
@@ -215,6 +216,20 @@ export default function Dashboard() {
             </div>
             <div className="overflow-y-auto max-h-[140px]">
               <SignalPanel signals={dashboardData.signals} />
+            </div>
+          </div>
+
+          <div className="card p-3 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-wider">
+                Execution Bridge
+              </h2>
+              <span className="text-[8px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                {dashboardData.execution.length} ORDERS
+              </span>
+            </div>
+            <div className="overflow-y-auto max-h-[170px]">
+              <ExecutionPanel orders={dashboardData.execution} />
             </div>
           </div>
 

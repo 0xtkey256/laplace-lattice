@@ -1,5 +1,5 @@
 import { runMonteCarloSimulation } from "@/lib/dashboard/monteCarlo";
-import type { DashboardData, DashboardNewsItem, DashboardSignal } from "@/lib/dashboard/types";
+import type { DashboardData, DashboardExecutionOrder, DashboardNewsItem, DashboardSignal } from "@/lib/dashboard/types";
 
 const mockNews: DashboardNewsItem[] = [
   {
@@ -117,6 +117,33 @@ const mockSignals: DashboardSignal[] = [
   },
 ];
 
+function mockExecutionFromSignals(signals: DashboardSignal[], initialPrice: number): DashboardExecutionOrder[] {
+  return signals.map((signal, index) => {
+    const side = signal.direction === "LONG" ? "BUY" : "SELL";
+    const orderType = signal.confidence > 0.75 ? "MKT" : "LMT";
+    const status =
+      signal.confidence >= 0.82 ? "FILLED" : signal.confidence >= 0.68 ? "ROUTED" : "QUEUED";
+    const sizePct = Math.min(15, Math.max(2, Number((signal.confidence * 12).toFixed(2))));
+    const limitPrice =
+      side === "BUY"
+        ? Number((initialPrice * (1 - Math.abs(signal.mu_adj) * 0.25)).toFixed(2))
+        : Number((initialPrice * (1 + Math.abs(signal.mu_adj) * 0.25)).toFixed(2));
+
+    return {
+      id: `exec-mock-${index + 1}`,
+      commodity: signal.commodity,
+      asset: signal.commodity.includes("Copper") ? "HG" : "SOY",
+      side,
+      orderType,
+      status,
+      confidence: signal.confidence,
+      sizePct,
+      limitPrice,
+      rationale: `Derived from AI signal (${signal.source}) with ${(signal.confidence * 100).toFixed(0)}% confidence.`,
+    };
+  });
+}
+
 export function createMockDashboardData(warnings: string[] = []): DashboardData {
   const weightedSentiment =
     mockSignals.reduce(
@@ -127,13 +154,15 @@ export function createMockDashboardData(warnings: string[] = []): DashboardData 
 
   const muAdjustment = weightedSentiment * 0.05;
   const sigmaMultiplier = 1 + Math.abs(weightedSentiment) * 0.1;
+  const initialPrice = 1200;
+  const execution = mockExecutionFromSignals(mockSignals, initialPrice);
 
   return {
     generatedAt: new Date().toISOString(),
     news: mockNews,
     signals: mockSignals,
     simulation: runMonteCarloSimulation({
-      initialPrice: 1200,
+      initialPrice,
       mu: 0.04,
       sigma: 0.18,
       muAdjustment,
@@ -149,6 +178,7 @@ export function createMockDashboardData(warnings: string[] = []): DashboardData 
       muAdjustment,
       sigmaMultiplier,
     },
+    execution,
     stats: {
       signals: mockSignals.length,
       edge: "3-8h",

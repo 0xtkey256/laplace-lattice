@@ -7,6 +7,7 @@ const steps = [
   { icon: "\u{1F4CA}", label: "Signal Agg", status: "active" },
   { icon: "\u{1F3B2}", label: "Monte Carlo", status: "active" },
   { icon: "\u{1F4B9}", label: "Trade Signal", status: "active" },
+  { icon: "\u{2699}\u{FE0F}", label: "Execution", status: "active" },
 ];
 
 export default function PipelineFlow() {
