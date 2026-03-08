@@ -52,6 +52,7 @@ const memberSections = [
     tagColor: "text-green-400 bg-green-500/10 border-green-500/20",
     tag: "INFRA",
     skeletonLines: [2, 3, 4, 2],
+    url: "https://laplace-fpga-llvm.vercel.app",
   },
 ];
 
@@ -167,49 +168,64 @@ export default function Dashboard() {
 
           {/* Member Placeholder Sections */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-            {memberSections.map((m, i) => (
-              <div
-                key={i}
-                className={`card p-3 ${m.color} hover:bg-white/[0.03] transition-all`}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center text-[7px] font-bold text-gray-400 flex-shrink-0">
-                    {m.initials}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <span className="text-[10px] font-semibold text-gray-300 truncate">{m.section}</span>
-                    <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${m.tagColor} flex-shrink-0`}>
-                      {m.tag}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-[8px] text-gray-600 font-mono mb-2">{m.desc}</p>
-                {/* Skeleton loading bars */}
-                <div className="space-y-1.5">
-                  {m.skeletonLines.map((width, j) => (
-                    <div key={j} className="flex gap-1.5">
-                      <div
-                        className="h-1.5 rounded-full bg-white/[0.04] skeleton-pulse"
-                        style={{ width: `${width * 25}%` }}
-                      />
-                      {width < 4 && (
-                        <div
-                          className="h-1.5 rounded-full bg-white/[0.03] skeleton-pulse"
-                          style={{ width: `${(4 - width) * 15}%`, animationDelay: `${j * 0.2}s` }}
-                        />
-                      )}
+            {memberSections.map((m, i) => {
+              const isLive = "url" in m && m.url;
+              const Wrapper = isLive ? "a" : "div";
+              const wrapperProps = isLive ? { href: m.url as string, target: "_blank", rel: "noopener noreferrer" } : {};
+              return (
+                <Wrapper
+                  key={i}
+                  {...wrapperProps}
+                  className={`card p-3 ${m.color} hover:bg-white/[0.03] transition-all block ${isLive ? "cursor-pointer glow-green" : ""}`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center text-[7px] font-bold text-gray-400 flex-shrink-0">
+                      {m.initials}
                     </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-[8px] font-mono text-gray-700">{m.name}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="w-1 h-1 rounded-full bg-yellow-500/60 skeleton-pulse" />
-                    <span className="text-[7px] font-mono text-yellow-500/60">BUILDING</span>
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="text-[10px] font-semibold text-gray-300 truncate">{m.section}</span>
+                      <span className={`text-[7px] font-mono px-1 py-0.5 rounded border ${m.tagColor} flex-shrink-0`}>
+                        {m.tag}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                  <p className="text-[8px] text-gray-600 font-mono mb-2">{m.desc}</p>
+                  {/* Skeleton loading bars */}
+                  {!isLive && (
+                    <div className="space-y-1.5">
+                      {m.skeletonLines.map((width, j) => (
+                        <div key={j} className="flex gap-1.5">
+                          <div
+                            className="h-1.5 rounded-full bg-white/[0.04] skeleton-pulse"
+                            style={{ width: `${width * 25}%` }}
+                          />
+                          {width < 4 && (
+                            <div
+                              className="h-1.5 rounded-full bg-white/[0.03] skeleton-pulse"
+                              style={{ width: `${(4 - width) * 15}%`, animationDelay: `${j * 0.2}s` }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[8px] font-mono text-gray-700">{m.name}</span>
+                    {isLive ? (
+                      <div className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 signal-live" />
+                        <span className="text-[7px] font-mono text-green-400 font-bold">LIVE →</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-yellow-500/60 skeleton-pulse" />
+                        <span className="text-[7px] font-mono text-yellow-500/60">BUILDING</span>
+                      </div>
+                    )}
+                  </div>
+                </Wrapper>
+              );
+            })}
           </div>
         </div>
       </div>
